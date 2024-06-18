@@ -11,29 +11,13 @@
         "phpomg/psr16": "^1.0",
         "phpomg/psr17": "^1.0",
         "phpomg/router": "^1.0",
-        "phpomg/responser": "^1.0",
+        "phpomg/emitter": "^1.0",
         "phpomg/database": "^1.0",
         "phpomg/template": "^1.0",
         "phpomg/session": "^1.0",
         "phpomg/request": "^1.0",
         "phpomg/form": "^1.0",
         "phpomg/pagination": "^1.0"
-    },
-    "require-dev": {
-        "phpomg/psr3": "dev-main",
-        "phpomg/psr11": "dev-main",
-        "phpomg/psr14": "dev-main",
-        "phpomg/psr15": "dev-main",
-        "phpomg/psr16": "dev-main",
-        "phpomg/psr17": "dev-main",
-        "phpomg/router": "dev-main",
-        "phpomg/emitter": "dev-main",
-        "phpomg/database": "dev-main",
-        "phpomg/template": "dev-main",
-        "phpomg/session": "dev-main",
-        "phpomg/request": "dev-main",
-        "phpomg/form": "dev-main",
-        "phpomg/pagination": "dev-main"
     },
     "autoload": {
         "psr-4": {
