@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace PHPOMG;
 
+use Composer\Autoload\ClassLoader;
 use Exception;
 use InvalidArgumentException;
 use PHPOMG\Facade\App;
+use ReflectionClass;
 
 class Config
 {
@@ -56,7 +58,7 @@ class Config
         }
 
         $res = [];
-        $file = dirname(__DIR__, 4) . '/config/' . $filename . '.php';
+        $file = dirname((new ReflectionClass(ClassLoader::class))->getFileName(), 3) . '/config/' . $filename . '.php';
         if (is_file($file)) {
             $tmp = $this->requireFile($file);
             if (!is_array($tmp)) {
@@ -79,7 +81,7 @@ class Config
     private function load(string $filename, string $appname): array
     {
         $files = [];
-        $root = dirname(__DIR__, 4);
+        $root = dirname((new ReflectionClass(ClassLoader::class))->getFileName(), 3);
         if (!strlen($appname)) {
             if (file_exists($root . '/config/' . $filename . '.php')) {
                 $files[] = $root . '/config/' . $filename . '.php';
