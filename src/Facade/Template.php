@@ -9,12 +9,10 @@ use Psr\SimpleCache\CacheInterface;
 
 class Template
 {
-
     public static function getInstance(): TemplateTemplate
     {
         return Container::get(TemplateTemplate::class);
     }
-
 
     public static function setCache(CacheInterface $cache): TemplateTemplate
     {
