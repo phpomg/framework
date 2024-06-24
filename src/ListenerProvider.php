@@ -15,7 +15,6 @@ class ListenerProvider implements ListenerProviderInterface
     {
         foreach (Config::get('listen', []) as $key => $value) {
             if (is_a($event, $key)) {
-                // yield $value;
                 yield function ($event) use ($key, $value) {
                     Framework::execute($value, [
                         $key => $event,
@@ -26,7 +25,6 @@ class ListenerProvider implements ListenerProviderInterface
         foreach (App::all() as $appname) {
             foreach (Config::get('listen@' . $appname, []) as $key => $value) {
                 if (is_a($event, $key)) {
-                    // yield $value;
                     yield function ($event) use ($key, $value) {
                         Framework::execute($value, [
                             $key => $event,

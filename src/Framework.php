@@ -66,15 +66,15 @@ class Framework
                 'master_config' => Config::get('database.master_config', []),
                 'slaves_config' => Config::get('database.slaves_config', []),
             ],
-            Event::class => function (
-                Event $event,
+            Psr14Event::class => function (
+                Psr14Event $event,
                 ListenerProvider $listenerProvider
             ) {
                 $event->addProvider($listenerProvider);
             },
-            Request::class => [
-                ServerRequestInterface::class => ServerRequest::fromGlobals()->withQueryParams(array_merge($_GET, Route::getParams())),
-            ],
+            Request::class => function () {
+                return new Request(ServerRequest::fromGlobals()->withQueryParams(array_merge($_GET, Route::getParams())));
+            },
             Template::class => function (
                 Template $template,
                 CacheInterface $cache,
@@ -156,6 +156,8 @@ class Framework
 
         Event::dispatch(Router::getInstance());
 
+        Event::dispatch(Route::getInstance());
+
         if (!Route::isFound()) {
             $handler = new class implements RequestHandlerInterface
             {
@@ -175,7 +177,6 @@ class Framework
         } else {
             $handler = Container::get(Route::getHandler());
         }
-
         $serverRequest = ServerRequest::fromGlobals()->withQueryParams(array_merge($_GET, Route::getParams()));
         $response = RequestHandler::setHandler($handler)->handle($serverRequest);
 
