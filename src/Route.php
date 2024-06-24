@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace PHPOMG;
 
-use Exception;
 use GuzzleHttp\Psr7\ServerRequest;
 use PHPOMG\Facade\App;
 use PHPOMG\Facade\Router;
@@ -23,16 +22,16 @@ class Route
         $uri = ServerRequest::getUriFromGlobals();
         $res = Router::dispatch($_SERVER['REQUEST_METHOD'] ?? 'GET', '' . $uri->withQuery(''));
 
-        $this->found = $res[0];
-
-        if ($this->found) {
-            $cls = $res[2] ?? null;
-            if (!is_string($cls) || !is_subclass_of($cls, RequestHandlerInterface::class)) {
-                throw new Exception("路由仅支持"); // todl..
+        if ($res[0]) {
+            $cls = $res[2] ?? '';
+            $appname = $this->getAppNameFromClass($cls);
+            if (App::has($appname) && is_subclass_of($cls, RequestHandlerInterface::class, true)) {
+                $this->found = true;
+                $this->allowed = $res[1] ?? false;
+                $this->handler = $cls;
+                $this->params = $res[3] ?? [];
+                $this->appname = $appname;
             }
-            $this->allowed = $res[1] ?? false;
-            $this->handler = $cls;
-            $this->params = $res[3] ?? [];
         } else {
             $uri = ServerRequest::getUriFromGlobals();
             $paths = explode('/', $uri->getPath());
@@ -42,32 +41,20 @@ class Route
                     unset($paths[$key]);
                 }
             }
+
             if (count($paths) >= 3) {
                 array_splice($paths, 0, 0, 'App');
                 array_splice($paths, 3, 0, 'Http');
                 $cls = str_replace(['-'], [''], ucwords(implode('\\', $paths), '\\-'));
-                if (is_subclass_of($cls, RequestHandlerInterface::class)) {
+                $appname = $this->getAppNameFromClass($cls);
+                if (App::has($appname) && is_subclass_of($cls, RequestHandlerInterface::class, true)) {
                     $this->found = true;
                     $this->allowed = true;
                     $this->handler = $cls;
                     $this->params = [];
+                    $this->appname = $appname;
                 }
             }
-        }
-
-        if ($this->found) {
-            $paths = explode('\\', $this->handler);
-            if (!isset($paths[4]) || $paths[0] != 'App' || $paths[3] != 'Http') {
-                $this->found = false;
-            }
-            $camelToLine = function (string $str): string {
-                return strtolower(preg_replace('/([A-Z])/', "-$1", lcfirst($str)));
-            };
-            $appname = $camelToLine($paths[1]) . '/' . $camelToLine($paths[2]);
-            if (!App::has($appname)) {
-                $this->found = false;
-            }
-            $this->appname = $appname;
         }
     }
 
@@ -94,5 +81,17 @@ class Route
     public function getAppName(): ?string
     {
         return $this->appname;
+    }
+
+    private function getAppNameFromClass(string $class): string
+    {
+        $paths = explode('\\', $class);
+        if (!isset($paths[4]) || $paths[0] != 'App' || $paths[3] != 'Http') {
+            $this->found = false;
+        }
+        $camelToLine = function (string $str): string {
+            return strtolower(preg_replace('/([A-Z])/', "-$1", lcfirst($str)));
+        };
+        return $camelToLine($paths[1]) . '/' . $camelToLine($paths[2]);
     }
 }
