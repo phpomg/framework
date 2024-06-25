@@ -51,54 +51,15 @@ class Framework
     public function __construct()
     {
         $container = Container::getInstance();
-        $items = [
-            Psr11Container::class => $container,
-            ContainerInterface::class => Psr11Container::class,
+        foreach (array_merge([
             LoggerInterface::class => DelegatingLogger::class,
             CacheInterface::class => NullAdapter::class,
-            EventDispatcherInterface::class => Psr14Event::class,
-            ListenerProviderInterface::class => Psr14Event::class,
             ResponseFactoryInterface::class => Factory::class,
             UriFactoryInterface::class => Factory::class,
             ServerRequestFactoryInterface::class => Factory::class,
             RequestFactoryInterface::class => Factory::class,
             StreamFactoryInterface::class => Factory::class,
             UploadedFileFactoryInterface::class => Factory::class,
-            Db::class => [
-                'master_config' => Config::get('database.master_config', []),
-                'slaves_config' => Config::get('database.slaves_config', []),
-            ],
-            Psr14Event::class => function (
-                Psr14Event $event,
-                ListenerProvider $listenerProvider
-            ) {
-                $event->addProvider($listenerProvider);
-            },
-            Psr15RequestHandler::class => function () {
-                if (!Route::isFound()) {
-                    $handler = new class implements RequestHandlerInterface
-                    {
-                        public function handle(ServerRequestInterface $request): ResponseInterface
-                        {
-                            return HttpFactory::createResponse(404);
-                        }
-                    };
-                } else if (!Route::isAllowed()) {
-                    $handler = new class implements RequestHandlerInterface
-                    {
-                        public function handle(ServerRequestInterface $request): ResponseInterface
-                        {
-                            return HttpFactory::createResponse(405);
-                        }
-                    };
-                } else {
-                    $handler = Container::get(Route::getHandler());
-                }
-                return new Psr15RequestHandler(Container::getInstance(), $handler);
-            },
-            Request::class => function () {
-                return new Request(ServerRequest::fromGlobals()->withQueryParams(array_merge($_GET, Route::getParams())));
-            },
             Template::class => function (
                 Template $template,
                 CacheInterface $cache,
@@ -135,27 +96,47 @@ class Framework
                     }, get_defined_vars());?>';
                 });
             },
-        ];
-
-        foreach ($items as $id => $vo) {
-            if (is_array($vo)) {
-                $container->setArgument($id, $vo);
-            } elseif (is_string($vo)) {
-                $container->set($id, function () use ($vo, $container) {
-                    return $container->get($vo);
-                });
-            } elseif ($vo instanceof Closure) {
-                $container->set($id, $vo);
-            } elseif (is_object($vo)) {
-                $container->set($id, function () use ($vo) {
-                    return $vo;
-                });
-            } else {
-                throw new Exception('the option ' . $id . ' cannot config..');
-            }
-        }
-
-        foreach (Config::get('bootstrap', []) as $id => $vo) {
+            Db::class => [
+                'master_config' => Config::get('database.master_config', []),
+                'slaves_config' => Config::get('database.slaves_config', []),
+            ],
+            ContainerInterface::class => Psr11Container::class,
+            EventDispatcherInterface::class => Psr14Event::class,
+            ListenerProviderInterface::class => Psr14Event::class,
+            Psr14Event::class => function (
+                Psr14Event $event,
+                ListenerProvider $listenerProvider
+            ) {
+                $event->addProvider($listenerProvider);
+            },
+            Psr15RequestHandler::class => function () {
+                if (!Route::isFound()) {
+                    $handler = new class implements RequestHandlerInterface
+                    {
+                        public function handle(ServerRequestInterface $request): ResponseInterface
+                        {
+                            return HttpFactory::createResponse(404);
+                        }
+                    };
+                } else if (!Route::isAllowed()) {
+                    $handler = new class implements RequestHandlerInterface
+                    {
+                        public function handle(ServerRequestInterface $request): ResponseInterface
+                        {
+                            return HttpFactory::createResponse(405);
+                        }
+                    };
+                } else {
+                    $handler = Container::get(Route::getHandler());
+                }
+                return new Psr15RequestHandler(Container::getInstance(), $handler);
+            },
+            Request::class => function () {
+                return new Request(ServerRequest::fromGlobals()->withQueryParams(array_merge($_GET, Route::getParams())));
+            },
+        ], Config::get('container', []), [
+            Psr11Container::class => $container,
+        ]) as $id => $vo) {
             if (is_array($vo)) {
                 $container->setArgument($id, $vo);
             } elseif (is_string($vo)) {
