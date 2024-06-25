@@ -61,10 +61,22 @@ class Framework
             StreamFactoryInterface::class => Factory::class,
             UploadedFileFactoryInterface::class => Factory::class,
             Template::class => function (
-                Template $template,
-                CacheInterface $cache,
+                Template $template
             ) {
-                $template->setCache($cache);
+                $template->setCache(Cache::getInstance());
+                $template->addFinder(function (string $tpl): ?string {
+                    if (strpos($tpl, '@')) {
+                        list($file, $appname) = explode('@', $tpl);
+                        if ($appname && $file) {
+                            $dir = App::getDir($appname);
+                            $fullname = $dir . '/src/template/' . $file . '.php';
+                            if (is_file($fullname)) {
+                                return file_get_contents($fullname);
+                            }
+                        }
+                    }
+                    return null;
+                });
                 $template->assign([
                     'db' => FacadeDb::getInstance(),
                     'cache' => Cache::getInstance(),
