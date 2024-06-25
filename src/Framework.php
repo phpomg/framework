@@ -107,6 +107,21 @@ class Framework
                         return $res;
                     }, get_defined_vars());?>';
                 });
+                $template->extend('/__ROOT__/Ui', function ($matchs) {
+                    if (
+                        (!empty($_SERVER['REQUEST_SCHEME']) && $_SERVER['REQUEST_SCHEME'] == 'https')
+                        || (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on')
+                        || (!empty($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == '443')
+                    ) {
+                        $schema = 'https';
+                    } else {
+                        $schema = 'http';
+                    }
+                    $script_name = '/' . implode('/', array_filter(explode('/', $_SERVER['SCRIPT_NAME'])));
+                    $root = strlen(dirname($script_name)) > 1 ? dirname($script_name) : '';
+
+                    return $schema . '://' . $_SERVER['HTTP_HOST'] . $root;
+                });
             },
             Db::class => [
                 'master_config' => Config::get('database.master_config', []),
