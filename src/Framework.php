@@ -8,6 +8,7 @@ use Closure;
 use Exception;
 use GuzzleHttp\Psr7\ServerRequest;
 use PHPOMG\Database\Db;
+use PHPOMG\Facade\App;
 use PHPOMG\Facade\Cache;
 use PHPOMG\Facade\Config;
 use PHPOMG\Facade\Container;
@@ -25,6 +26,7 @@ use PHPOMG\ListenerProvider;
 use PHPOMG\Psr3\DelegatingLogger;
 use PHPOMG\Psr11\Container as Psr11Container;
 use PHPOMG\Psr14\Event as Psr14Event;
+use PHPOMG\Psr15\RequestHandler as Psr15RequestHandler;
 use PHPOMG\Psr16\NullAdapter;
 use PHPOMG\Psr17\Factory;
 use PHPOMG\Request\Request;
@@ -71,6 +73,28 @@ class Framework
                 ListenerProvider $listenerProvider
             ) {
                 $event->addProvider($listenerProvider);
+            },
+            Psr15RequestHandler::class => function () {
+                if (!Route::isFound()) {
+                    $handler = new class implements RequestHandlerInterface
+                    {
+                        public function handle(ServerRequestInterface $request): ResponseInterface
+                        {
+                            return HttpFactory::createResponse(404);
+                        }
+                    };
+                } else if (!Route::isAllowed()) {
+                    $handler = new class implements RequestHandlerInterface
+                    {
+                        public function handle(ServerRequestInterface $request): ResponseInterface
+                        {
+                            return HttpFactory::createResponse(405);
+                        }
+                    };
+                } else {
+                    $handler = Container::get(Route::getHandler());
+                }
+                return new Psr15RequestHandler(Container::getInstance(), $handler);
             },
             Request::class => function () {
                 return new Request(ServerRequest::fromGlobals()->withQueryParams(array_merge($_GET, Route::getParams())));
@@ -154,31 +178,14 @@ class Framework
     {
         Event::dispatch(Container::getInstance());
 
+        Event::dispatch(App::getInstance());
+
         Event::dispatch(Router::getInstance());
 
         Event::dispatch(Route::getInstance());
 
-        if (!Route::isFound()) {
-            $handler = new class implements RequestHandlerInterface
-            {
-                public function handle(ServerRequestInterface $request): ResponseInterface
-                {
-                    return HttpFactory::createResponse(404);
-                }
-            };
-        } else if (!Route::isAllowed()) {
-            $handler = new class implements RequestHandlerInterface
-            {
-                public function handle(ServerRequestInterface $request): ResponseInterface
-                {
-                    return HttpFactory::createResponse(405);
-                }
-            };
-        } else {
-            $handler = Container::get(Route::getHandler());
-        }
         $serverRequest = ServerRequest::fromGlobals()->withQueryParams(array_merge($_GET, Route::getParams()));
-        $response = RequestHandler::setHandler($handler)->handle($serverRequest);
+        $response = RequestHandler::handle($serverRequest);
 
         Emitter::emit($response);
     }

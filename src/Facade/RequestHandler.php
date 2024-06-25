@@ -8,7 +8,6 @@ use PHPOMG\Psr15\RequestHandler as Psr15RequestHandler;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
-use Psr\Http\Server\RequestHandlerInterface;
 
 class RequestHandler
 {
@@ -17,18 +16,12 @@ class RequestHandler
         return Container::get(Psr15RequestHandler::class);
     }
 
-    public static function setHandler(
-        RequestHandlerInterface $handler
-    ) {
-        return self::getInstance()->setHandler($handler);
-    }
-
-    public static function pushMiddleware(MiddlewareInterface ...$middlewares)
+    public static function pushMiddleware(...$middlewares)
     {
         return self::getInstance()->pushMiddleware(...$middlewares);
     }
 
-    public static function unShiftMiddleware(MiddlewareInterface ...$middlewares)
+    public static function unShiftMiddleware(...$middlewares)
     {
         return self::getInstance()->unShiftMiddleware(...$middlewares);
     }

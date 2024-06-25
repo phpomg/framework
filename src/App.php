@@ -70,6 +70,14 @@ class App
         return isset($this->lists[$appname]);
     }
 
+    public function add(string $appname, string $dir): self
+    {
+        $this->lists[$appname] = [
+            'dir' => $dir,
+        ];
+        return $this;
+    }
+
     public function getDir(string $appname): string
     {
         if (!$this->has($appname)) {

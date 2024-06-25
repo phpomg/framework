@@ -18,6 +18,11 @@ class App
         return self::getInstance()->has($appname);
     }
 
+    public static function add(string $appname, string $dir): PHPOMGApp
+    {
+        return self::getInstance()->add($appname, $dir);
+    }
+
     public static function getDir(string $appname): string
     {
         return self::getInstance()->getDir($appname);
