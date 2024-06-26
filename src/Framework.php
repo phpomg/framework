@@ -124,8 +124,8 @@ class Framework
                 });
             },
             Db::class => [
-                'master_config' => Config::get('database.master_config', []),
-                'slaves_config' => Config::get('database.slaves_config', []),
+                'master_config' => Config::get('database.master', []),
+                'slaves_config' => Config::get('database.slaves', []),
             ],
             ContainerInterface::class => Psr11Container::class,
             EventDispatcherInterface::class => Psr14Event::class,
