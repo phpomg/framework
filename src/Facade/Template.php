@@ -41,7 +41,7 @@ class Template
 
     public static function renderString(string $string, array $data = [], string $filename = null): string
     {
-        return self::getInstance()->render($string, $data, $filename);
+        return self::getInstance()->renderString($string, $data, $filename);
     }
 
     public static function parse(string $string): string
