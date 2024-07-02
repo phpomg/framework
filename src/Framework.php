@@ -69,7 +69,15 @@ class Framework
                         list($file, $appname) = explode('@', $tpl);
                         if ($appname && $file) {
                             $dir = App::getDir($appname);
+                            $fullname = $dir . '/src/template/' . $file;
+                            if (is_file($fullname)) {
+                                return file_get_contents($fullname);
+                            }
                             $fullname = $dir . '/src/template/' . $file . '.php';
+                            if (is_file($fullname)) {
+                                return file_get_contents($fullname);
+                            }
+                            $fullname = $dir . '/src/template/' . $file . '.tpl';
                             if (is_file($fullname)) {
                                 return file_get_contents($fullname);
                             }
